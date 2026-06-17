@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+__pycache__/*
+core/__pycache__/*
+models/__pycache__/*
+ui/__pycache__/*
+ui/dialogs/__pycache__/*
+ui/widgets/__pycache__/*
+src/configs/configs.json
+
+
+# 虚拟环境
+venv/
+env/
+.env
+
+# 站点配置
+sites.json
+cg.txt
+changgan_vertices.pcd
+cfgeditor/
+jumpfiledownload/
+pcdeditor/
+
+# IDE
+.vscode/
+.idea/
+.kilo/
+
+# 系统文件
+.DS_Store
+Thumbs.db

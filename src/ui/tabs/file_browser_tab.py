@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 
-from models.server import JumpChain
 from models.download_task import DownloadTask, DownloadStatus
 from core.sftp_client import SFTPClientWrapper, RemoteFile
 from core.downloader import DownloadManager

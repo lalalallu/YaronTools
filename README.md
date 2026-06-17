@@ -118,6 +118,5 @@ src/
 ```bash
 pyinstaller --onefile --windowed \
   --name="YaronTools" \
-  --add-data="configs:configs" \
   main.py
 ```

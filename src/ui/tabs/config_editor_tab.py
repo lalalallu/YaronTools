@@ -399,8 +399,20 @@ class ConfigEditorTab(QWidget):
     def _do_undo(self):
         if not self._undo_stack:
             return
-        idx, old_entry = self._undo_stack.pop()
-        self._entries[idx] = old_entry
+        item = self._undo_stack.pop()
+        if len(item) == 2:
+            idx, old_entry = item
+            op = "edit"
+        else:
+            idx, old_entry, op = item
+
+        if op == "add":
+            self._entries.pop(idx)
+        elif op == "delete":
+            self._entries.insert(idx, old_entry)
+        else:
+            self._entries[idx] = old_entry
+
         self._refresh_tree()
         if not self._undo_stack:
             self._undo_btn.setEnabled(False)
@@ -414,7 +426,7 @@ class ConfigEditorTab(QWidget):
                 line_number=len(self._entries) + 1
             )
             self._entries.append(entry)
-            self._undo_stack.append((len(self._entries) - 1, None))
+            self._undo_stack.append((len(self._entries) - 1, entry, "add"))
             self._refresh_tree()
             self._undo_btn.setEnabled(True)
             self.modified_changed.emit(True)
@@ -431,7 +443,7 @@ class ConfigEditorTab(QWidget):
 
         entry = self._entries[idx]
         if entry.is_empty or entry.is_section or (entry.comment and not entry.key):
-            self._undo_stack.append((idx, copy.deepcopy(entry)))
+            self._undo_stack.append((idx, copy.deepcopy(entry), "delete"))
             self._entries.pop(idx)
             self._refresh_tree()
             self._undo_btn.setEnabled(True)
@@ -444,7 +456,7 @@ class ConfigEditorTab(QWidget):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
-            self._undo_stack.append((idx, copy.deepcopy(entry)))
+            self._undo_stack.append((idx, copy.deepcopy(entry), "delete"))
             self._entries.pop(idx)
             self._refresh_tree()
             self._undo_btn.setEnabled(True)

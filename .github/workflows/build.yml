@@ -67,7 +67,6 @@ jobs:
               /venv/bin/pip install -r requirements.txt -q &&
               /venv/bin/pyinstaller --name 'YaronTools' \
                 --windowed --onefile --clean \
-                --add-data 'configs:configs' \
                 --hidden-import 'PyQt6.sip' \
                 --hidden-import 'asyncssh' \
                 --collect-all PyQt6 \
@@ -83,7 +82,6 @@ jobs:
                       --windowed \
                       --onefile \
                       --clean \
-                      --add-data "configs;configs" \
                       --hidden-import "PyQt6.sip" \
                       --hidden-import "asyncssh" \
                       --collect-all PyQt6 \

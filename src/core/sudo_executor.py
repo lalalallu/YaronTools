@@ -1,6 +1,4 @@
-import asyncio
 import base64
-from concurrent.futures import TimeoutError as FuturesTimeoutError
 
 from core.connection import SSHConnectionManager
 

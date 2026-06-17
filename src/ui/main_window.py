@@ -32,7 +32,7 @@ class UnifiedMainWindow(QMainWindow):
         super().__init__()
 
         self._connection: SSHConnectionManager = None
-        self._sftp: SFTPClientWrapper = None
+        self._sftp: SFTPClientWrapperExt = None
         self._sudo_executor: SudoExecutor = None
         self._backup_manager: BackupManager = None
         self._conflict_detector: ConflictDetector = None

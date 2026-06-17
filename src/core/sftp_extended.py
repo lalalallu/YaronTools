@@ -1,11 +1,7 @@
 """
 扩展 SFTP 客户端 — 增加远程文件读取能力，不修改现有 core/sftp_client.py。
 """
-import asyncio
-from concurrent.futures import TimeoutError as FuturesTimeoutError
-
 from core.sftp_client import SFTPClientWrapper
-from core.connection import ConnectionError
 
 
 class SFTPClientWrapperExt(SFTPClientWrapper):

@@ -83,7 +83,7 @@ class PCDEditorTab(QWidget):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
 
         scroll_content = QWidget()
@@ -101,45 +101,57 @@ class PCDEditorTab(QWidget):
             pt_layout = QVBoxLayout(pt_group)
 
             coords = QHBoxLayout()
+            coords.setSpacing(4)
             pt_lines = []
             for label_text in ("x", "y", "z"):
-                coords.addWidget(QLabel(f"{label_text}:"))
+                lbl = QLabel(f"{label_text}:")
+                lbl.setFixedWidth(16)
+                coords.addWidget(lbl)
                 edit = QLineEdit()
                 edit.setPlaceholderText("0.00000")
-                edit.setMaximumWidth(120)
+                edit.setMinimumWidth(140)
+                edit.setFixedWidth(150)
                 validator = QDoubleValidator()
                 validator.setNotation(QDoubleValidator.Notation.StandardNotation)
                 edit.setValidator(validator)
                 edit.setEnabled(False)
                 coords.addWidget(edit)
-                coords.addStretch()
                 pt_lines.append(edit)
+            coords.addStretch()
             self._edit_lines.append(pt_lines)
             pt_layout.addLayout(coords)
 
             normal_row = QHBoxLayout()
+            normal_row.setSpacing(4)
             readonly_vars = []
             for label_text in ("normal_x", "normal_y", "normal_z"):
-                normal_row.addWidget(QLabel(f"{label_text}:"))
+                lbl_hdr = QLabel(f"{label_text}:")
+                lbl_hdr.setFixedWidth(60)
+                normal_row.addWidget(lbl_hdr)
                 lbl = QLabel("0")
                 lbl.setStyleSheet(
                     "background-color: #f0f0f0; border: 1px solid #ccc; "
-                    "padding: 2px 6px; min-width: 80px;"
+                    "padding: 2px 6px; min-width: 140px;"
                 )
+                lbl.setMinimumWidth(140)
                 lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 normal_row.addWidget(lbl)
-                normal_row.addStretch()
                 readonly_vars.append(lbl)
+            normal_row.addStretch()
             self._readonly_labels.append(readonly_vars)
             pt_layout.addLayout(normal_row)
 
             curv_row = QHBoxLayout()
-            curv_row.addWidget(QLabel("curvature:"))
+            curv_row.setSpacing(4)
+            curv_hdr = QLabel("curvature:")
+            curv_hdr.setFixedWidth(60)
+            curv_row.addWidget(curv_hdr)
             curv_lbl = QLabel("0")
             curv_lbl.setStyleSheet(
                 "background-color: #f0f0f0; border: 1px solid #ccc; "
-                "padding: 2px 6px; min-width: 80px;"
+                "padding: 2px 6px; min-width: 140px;"
             )
+            curv_lbl.setMinimumWidth(140)
             curv_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             curv_row.addWidget(curv_lbl)
             curv_row.addStretch()

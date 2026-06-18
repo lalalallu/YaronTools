@@ -54,8 +54,8 @@ class UnifiedMainWindow(QMainWindow):
 
     def _setup_ui(self):
         self.setWindowTitle("YaronTools")
-        self.setGeometry(100, 100, 1400, 850)
-        self.setMinimumSize(1100, 650)
+        self.setGeometry(100, 100, 1400, 900)
+        self.setMinimumSize(1200, 700)
 
         central = QWidget()
         self.setCentralWidget(central)

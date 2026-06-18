@@ -86,19 +86,25 @@ class SFTPClientWrapper:
             文件列表
         """
         files = []
-        
+
+        if not path or not path.strip():
+            raise IOError("无法列出目录: 路径不能为空")
+
         try:
-            # scandir() 返回 SFTPDirEntry 对象列表
             entries = self.sftp.scandir(path)
-            
-            for entry in entries:
-                # 过滤 . 和 .. 条目
+        except Exception:
+            return self._list_dir_fallback(path, sort_by)
+
+        for entry in entries:
+            try:
                 if entry.filename in ('.', '..'):
                     continue
-                
-                file_path = os.path.join(path, entry.filename).replace('\\', '/')
-                
-                # 解析权限
+
+                if not entry.filename or '\x00' in entry.filename:
+                    continue
+
+                file_path = path.rstrip('/') + '/' + entry.filename
+
                 mode = entry.attrs.permissions
                 perms = ""
                 perms += "d" if stat.S_ISDIR(mode) else "-"
@@ -111,14 +117,12 @@ class SFTPClientWrapper:
                 perms += "r" if mode & stat.S_IROTH else "-"
                 perms += "w" if mode & stat.S_IWOTH else "-"
                 perms += "x" if mode & stat.S_IXOTH else "-"
-                
-                # 修改时间
+
                 mtime = entry.attrs.mtime if hasattr(entry.attrs, 'mtime') and entry.attrs.mtime else 0
                 modify_time = datetime.fromtimestamp(mtime) if mtime else datetime.now()
-                
-                # 文件大小
+
                 size = entry.attrs.size if hasattr(entry.attrs, 'size') else 0
-                
+
                 file = RemoteFile(
                     name=entry.filename,
                     path=file_path,
@@ -128,10 +132,9 @@ class SFTPClientWrapper:
                     permissions=perms
                 )
                 files.append(file)
-        
-        except Exception as e:
-            raise IOError(f"无法列出目录 {path}: {str(e)}")
-        
+            except Exception:
+                continue
+
         # 排序：目录在前
         if sort_by == "mtime":
             # 按修改时间倒序（最新在前）
@@ -171,12 +174,18 @@ class SFTPClientWrapper:
         )
     
     def get_home(self) -> str:
-        """获取用户主目录（realpath替代normalize）"""
-        return self.sftp.realpath('.')
+        """获取用户主目录"""
+        try:
+            return self.sftp.realpath('.')
+        except Exception:
+            return "/"
     
     def normalize_path(self, path: str) -> str:
-        """规范化路径（realpath替代normalize）"""
-        return self.sftp.realpath(path)
+        """规范化路径"""
+        try:
+            return self.sftp.realpath(path)
+        except Exception:
+            return path
     
     def exists(self, path: str) -> bool:
         """检查文件是否存在"""
@@ -187,7 +196,8 @@ class SFTPClientWrapper:
             return False
     
     def is_dir(self, path: str) -> bool:
-        """检查是否为目录"""
+        if path == "/" or path.endswith(":/"):
+            return True
         try:
             attr = self.sftp.stat(path)
             return stat.S_ISDIR(attr.permissions)
@@ -220,3 +230,47 @@ class SFTPClientWrapper:
     def close(self):
         """关闭连接"""
         self._sftp = None
+
+    def _list_dir_fallback(self, path: str, sort_by: str = "mtime") -> List[RemoteFile]:
+        """通过 exec_command 执行 ls -la 作为 scandir 失败时的回退方案"""
+        try:
+            exit_status, stdout, stderr = self._connection.execute_command(
+                f"ls -la '{path}'", timeout=15
+            )
+            if exit_status != 0:
+                raise IOError(f"无法列出目录 {path}: {stderr}")
+        except Exception as e:
+            raise IOError(f"无法列出目录 {path}: {str(e)}")
+
+        files = []
+        for line in stdout.splitlines():
+            line = line.strip()
+            if not line or line.startswith("total "):
+                continue
+            parts = line.split(None, 8)
+            if len(parts) < 9:
+                continue
+
+            perms = parts[0]
+            name = parts[8]
+            if name in ('.', '..'):
+                continue
+
+            is_dir = perms.startswith('d')
+            try:
+                size = int(parts[4])
+            except ValueError:
+                size = 0
+
+            file_path = path.rstrip('/') + '/' + name
+            modify_time = datetime.now()
+            files.append(RemoteFile(
+                name=name, path=file_path, is_dir=is_dir,
+                size=size, modify_time=modify_time, permissions=perms
+            ))
+
+        if sort_by == "mtime":
+            files.sort(key=lambda f: (not f.is_dir, f.name.lower()))
+        else:
+            files.sort(key=lambda f: (not f.is_dir, f.name.lower()))
+        return files

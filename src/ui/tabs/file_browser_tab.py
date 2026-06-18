@@ -218,7 +218,7 @@ class FileBrowserTab(QWidget):
             try:
                 files = sftp.list_dir(current_path)
                 if current_path != "/":
-                    parent = os.path.dirname(current_path.rstrip('/'))
+                    parent = os.path.dirname(current_path.rstrip('/')).replace('\\', '/')
                     if not parent:
                         parent = "/"
                     parent_entry = RemoteFile(

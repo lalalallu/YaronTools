@@ -6,7 +6,7 @@ from core.sftp_client import SFTPClientWrapper
 
 class SFTPClientWrapperExt(SFTPClientWrapper):
     def read_file(self, remote_path: str) -> bytes:
-        return self.sftp._run_async(self._async_read_file(remote_path), timeout=60)
+        return self.sftp._run_async(self._async_read_file(remote_path.replace('\\', '/')), timeout=60)
 
     async def _async_read_file(self, remote_path: str) -> bytes:
         sftp_client = self.sftp._sftp
@@ -20,7 +20,7 @@ class SFTPClientWrapperExt(SFTPClientWrapper):
         return bytes(data)
 
     def write_file(self, remote_path: str, content: bytes) -> None:
-        self.sftp._run_async(self._async_write_file(remote_path, content), timeout=60)
+        self.sftp._run_async(self._async_write_file(remote_path.replace('\\', '/'), content), timeout=60)
 
     async def _async_write_file(self, remote_path: str, content: bytes):
         sftp_client = self.sftp._sftp

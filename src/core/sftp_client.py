@@ -90,6 +90,8 @@ class SFTPClientWrapper:
         if not path or not path.strip():
             raise IOError("无法列出目录: 路径不能为空")
 
+        path = path.replace('\\', '/')
+
         entries = self._try_scandir(path)
         if entries is None:
             return self._list_dir_fallback(path, sort_by)
@@ -145,7 +147,7 @@ class SFTPClientWrapper:
     
     def stat(self, path: str) -> RemoteFile:
         """获取文件信息"""
-        attr = self.sftp.stat(path)
+        attr = self.sftp.stat(path.replace('\\', '/'))
         
         mode = attr.permissions if hasattr(attr, 'permissions') else 0
         perms = ""
@@ -175,16 +177,16 @@ class SFTPClientWrapper:
     def get_home(self) -> str:
         """获取用户主目录"""
         try:
-            return self.sftp.realpath('.')
+            return self.sftp.realpath('.').replace('\\', '/')
         except Exception:
             return "/"
     
     def normalize_path(self, path: str) -> str:
         """规范化路径"""
         try:
-            return self.sftp.realpath(path)
+            return self.sftp.realpath(path).replace('\\', '/')
         except Exception:
-            return path
+            return path.replace('\\', '/')
     
     def exists(self, path: str) -> bool:
         """检查文件是否存在"""
@@ -195,6 +197,7 @@ class SFTPClientWrapper:
             return False
     
     def is_dir(self, path: str) -> bool:
+        path = path.replace('\\', '/')
         if path == "/" or path.endswith(":/"):
             return True
         try:
@@ -224,7 +227,7 @@ class SFTPClientWrapper:
         if local_dir and not os.path.exists(local_dir):
             os.makedirs(local_dir, exist_ok=True)
         
-        self.sftp.get(remote_path, local_path, callback=callback, offset=offset)
+        self.sftp.get(remote_path.replace('\\', '/'), local_path, callback=callback, offset=offset)
     
     def close(self):
         """关闭连接"""

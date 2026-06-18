@@ -4,10 +4,14 @@ SSH连接管理器 - 使用asyncssh实现（更稳定）
 """
 import asyncio
 import asyncssh
+import sys
 import threading
 from typing import Optional, Tuple, List, AsyncIterator
 import socket
 from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from models.server import ServerConfig, JumpChain
 

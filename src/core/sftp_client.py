@@ -90,9 +90,8 @@ class SFTPClientWrapper:
         if not path or not path.strip():
             raise IOError("无法列出目录: 路径不能为空")
 
-        try:
-            entries = self.sftp.scandir(path)
-        except Exception:
+        entries = self._try_scandir(path)
+        if entries is None:
             return self._list_dir_fallback(path, sort_by)
 
         for entry in entries:
@@ -231,16 +230,39 @@ class SFTPClientWrapper:
         """关闭连接"""
         self._sftp = None
 
+    def _try_scandir(self, path: str):
+        """尝试多种路径格式的 scandir，返回 entries 列表或 None"""
+        for p in (path, path.rstrip('/') + '/.'):
+            try:
+                return self.sftp.scandir(p)
+            except Exception:
+                continue
+        return None
+
     def _list_dir_fallback(self, path: str, sort_by: str = "mtime") -> List[RemoteFile]:
-        """通过 exec_command 执行 ls -la 作为 scandir 失败时的回退方案"""
-        try:
-            exit_status, stdout, stderr = self._connection.execute_command(
-                f"ls -la '{path}'", timeout=15
-            )
+        """通过 exec_command 作为 scandir 失败时的回退方案"""
+
+        def _try_command(cmd: str) -> str:
+            exit_status, stdout, stderr = self._connection.execute_command(cmd, timeout=15)
             if exit_status != 0:
-                raise IOError(f"无法列出目录 {path}: {stderr}")
-        except Exception as e:
-            raise IOError(f"无法列出目录 {path}: {str(e)}")
+                raise IOError(stderr.strip() or f"exit code {exit_status}")
+            return stdout
+
+        stdout = None
+        path_no_quote = path.replace("'", "")
+        for cmd in (
+            f"ls -la '{path_no_quote}'",
+            f"ls -la '{path_no_quote}/.'",
+            f"ls -la {path_no_quote}",
+        ):
+            try:
+                stdout = _try_command(cmd)
+                break
+            except Exception:
+                continue
+
+        if stdout is None:
+            raise IOError(f"无法列出目录 {path}: scandir 和所有回退方案均失败")
 
         files = []
         for line in stdout.splitlines():

@@ -112,7 +112,7 @@ class PCDEditorTab(QWidget):
                 edit.setPlaceholderText("0.00000")
                 edit.setMinimumWidth(140)
                 edit.setFixedWidth(150)
-                edit.setFixedHeight(30)
+                edit.setFixedHeight(28)
                 validator = QDoubleValidator()
                 validator.setNotation(QDoubleValidator.Notation.StandardNotation)
                 edit.setValidator(validator)

@@ -97,11 +97,12 @@ class PCDEditorTab(QWidget):
 
         for pt_idx in range(4):
             pt_group = QGroupBox(f"点 {pt_idx + 1}")
-            pt_group.setMinimumHeight(90)
+            pt_group.setMinimumHeight(110)
             pt_layout = QVBoxLayout(pt_group)
+            pt_layout.setSpacing(2)
 
             coords = QHBoxLayout()
-            coords.setSpacing(4)
+            coords.setSpacing(2)
             pt_lines = []
             for label_text in ("x", "y", "z"):
                 lbl = QLabel(f"{label_text}:")
@@ -111,6 +112,7 @@ class PCDEditorTab(QWidget):
                 edit.setPlaceholderText("0.00000")
                 edit.setMinimumWidth(140)
                 edit.setFixedWidth(150)
+                edit.setFixedHeight(30)
                 validator = QDoubleValidator()
                 validator.setNotation(QDoubleValidator.Notation.StandardNotation)
                 edit.setValidator(validator)

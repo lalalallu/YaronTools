@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QSplitter,
     QGroupBox, QMessageBox, QHeaderView, QScrollArea
 )
@@ -97,68 +97,61 @@ class PCDEditorTab(QWidget):
 
         for pt_idx in range(4):
             pt_group = QGroupBox(f"点 {pt_idx + 1}")
-            pt_group.setMinimumHeight(110)
-            pt_layout = QVBoxLayout(pt_group)
-            pt_layout.setSpacing(2)
+            pt_group.setMinimumHeight(100)
+            grid = QGridLayout(pt_group)
+            grid.setSpacing(3)
+            grid.setContentsMargins(1, 1, 1, 1)
+            grid.setColumnStretch(1, 1)
+            grid.setColumnStretch(3, 1)
+            grid.setColumnStretch(5, 1)
 
-            coords = QHBoxLayout()
-            coords.setSpacing(2)
             pt_lines = []
-            for label_text in ("x", "y", "z"):
+            for col_idx, label_text in enumerate(["x", "y", "z"]):
                 lbl = QLabel(f"{label_text}:")
                 lbl.setFixedWidth(16)
-                coords.addWidget(lbl)
+                lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                grid.addWidget(lbl, 0, col_idx * 2)
+
                 edit = QLineEdit()
                 edit.setPlaceholderText("0.00000")
-                edit.setMinimumWidth(140)
-                edit.setFixedWidth(150)
-                edit.setFixedHeight(28)
+                edit.setFixedHeight(26)
                 validator = QDoubleValidator()
                 validator.setNotation(QDoubleValidator.Notation.StandardNotation)
                 edit.setValidator(validator)
                 edit.setEnabled(False)
-                coords.addWidget(edit)
+                grid.addWidget(edit, 0, col_idx * 2 + 1)
                 pt_lines.append(edit)
-            coords.addStretch()
             self._edit_lines.append(pt_lines)
-            pt_layout.addLayout(coords)
 
-            normal_row = QHBoxLayout()
-            normal_row.setSpacing(4)
             readonly_vars = []
-            for label_text in ("normal_x", "normal_y", "normal_z"):
-                lbl_hdr = QLabel(f"{label_text}:")
-                lbl_hdr.setFixedWidth(60)
-                normal_row.addWidget(lbl_hdr)
+            for col_idx, label_text in enumerate(["nx", "ny", "nz"]):
+                hdr = QLabel(f"{label_text}:")
+                hdr.setFixedWidth(28)
+                hdr.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                grid.addWidget(hdr, 1, col_idx * 2)
+
                 lbl = QLabel("0")
                 lbl.setStyleSheet(
-                    "background-color: #f0f0f0; border: 1px solid #ccc; "
-                    "padding: 2px 6px; min-width: 140px;"
+                    "background-color: #f0f0f0; border: 1px solid #ccc; padding: 2px 6px;"
                 )
-                lbl.setMinimumWidth(140)
                 lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                normal_row.addWidget(lbl)
+                grid.addWidget(lbl, 1, col_idx * 2 + 1)
                 readonly_vars.append(lbl)
-            normal_row.addStretch()
             self._readonly_labels.append(readonly_vars)
-            pt_layout.addLayout(normal_row)
 
-            curv_row = QHBoxLayout()
-            curv_row.setSpacing(4)
-            curv_hdr = QLabel("curvature:")
-            curv_hdr.setFixedWidth(60)
-            curv_row.addWidget(curv_hdr)
+            curv_hdr = QLabel("c:")
+            curv_hdr.setFixedWidth(18)
+            curv_hdr.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            grid.addWidget(curv_hdr, 2, 0)
+
             curv_lbl = QLabel("0")
             curv_lbl.setStyleSheet(
-                "background-color: #f0f0f0; border: 1px solid #ccc; "
-                "padding: 2px 6px; min-width: 140px;"
+                "background-color: #f0f0f0; border: 1px solid #ccc; padding: 2px 6px;"
             )
             curv_lbl.setMinimumWidth(140)
             curv_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            curv_row.addWidget(curv_lbl)
-            curv_row.addStretch()
+            grid.addWidget(curv_lbl, 2, 1)
             self._curvature_labels.append(curv_lbl)
-            pt_layout.addLayout(curv_row)
 
             scroll_layout.addWidget(pt_group)
             self._point_frames.append(pt_group)

@@ -7,7 +7,7 @@ from typing import List, Optional
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QSplitter,
-    QGroupBox, QMessageBox, QHeaderView
+    QGroupBox, QMessageBox, QHeaderView, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator, QBrush, QColor
@@ -81,6 +81,15 @@ class PCDEditorTab(QWidget):
         edit_group = QGroupBox("编辑选中组")
         edit_layout = QVBoxLayout(edit_group)
 
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0, 0, 0, 0)
+
         self._point_frames = []
         self._edit_lines = []
         self._readonly_labels = []
@@ -88,6 +97,7 @@ class PCDEditorTab(QWidget):
 
         for pt_idx in range(4):
             pt_group = QGroupBox(f"点 {pt_idx + 1}")
+            pt_group.setMinimumHeight(90)
             pt_layout = QVBoxLayout(pt_group)
 
             coords = QHBoxLayout()
@@ -136,8 +146,12 @@ class PCDEditorTab(QWidget):
             self._curvature_labels.append(curv_lbl)
             pt_layout.addLayout(curv_row)
 
-            edit_layout.addWidget(pt_group)
+            scroll_layout.addWidget(pt_group)
             self._point_frames.append(pt_group)
+
+        scroll_layout.addStretch()
+        scroll.setWidget(scroll_content)
+        edit_layout.addWidget(scroll)
 
         btn_row = QHBoxLayout()
         self._apply_btn = QPushButton("应用修改")

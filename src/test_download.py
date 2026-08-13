@@ -8,6 +8,18 @@ import asyncio
 import asyncssh
 
 
+def _get_downloads_dir() -> str:
+    """获取 Windows 默认下载目录"""
+    try:
+        from PyQt6.QtCore import QStandardPaths
+        path = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
+        if path:
+            return path
+    except Exception:
+        pass
+    return os.path.join(os.path.expanduser("~"), "Downloads")
+
+
 async def test_direct_connection_async():
     """测试直接连接和下载（异步版本）"""
     print("=" * 50)
@@ -57,7 +69,7 @@ async def test_direct_connection_async():
         
         # 测试下载
         remote_file = input("\n请输入要下载的文件路径: ").strip()
-        local_file = os.path.join(os.path.expanduser("~/Downloads"), os.path.basename(remote_file))
+        local_file = os.path.join(_get_downloads_dir(), os.path.basename(remote_file))
         
         print(f"\n开始下载: {remote_file} -> {local_file}")
         
@@ -180,7 +192,7 @@ async def test_jump_connection_async():
         
         # 测试下载
         remote_file = input("\n请输入要下载的文件路径: ").strip()
-        local_file = os.path.join(os.path.expanduser("~/Downloads"), os.path.basename(remote_file))
+        local_file = os.path.join(_get_downloads_dir(), os.path.basename(remote_file))
         
         print(f"\n开始下载: {remote_file} -> {local_file}")
         

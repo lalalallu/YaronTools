@@ -96,7 +96,10 @@ class ConnectionDialog(QDialog):
         jump_layout.addWidget(self.jump_user_edit, 1, 1, 1, 3)
         
         # 跳板机认证方式
-        jump_auth_widget = self._create_auth_widget("jump", default_key_path="~/.ssh/id_rsa")
+        jump_auth_widget = self._create_auth_widget(
+            "jump",
+            default_key_path=os.path.join(os.path.expanduser("~"), ".ssh", "id_rsa")
+        )
         jump_layout.addWidget(jump_auth_widget, 2, 0, 1, 4)
         
         self.jump_group.hide()
@@ -206,7 +209,7 @@ class ConnectionDialog(QDialog):
         key_layout.addWidget(QLabel("密钥文件:"))
         key_edit = QLineEdit()
         key_edit.setText(default_key_path)
-        key_edit.setPlaceholderText("~/.ssh/id_rsa")
+        key_edit.setPlaceholderText("%USERPROFILE%\\.ssh\\id_rsa")
         key_layout.addWidget(key_edit)
         
         browse_btn = QPushButton("浏览")
@@ -283,7 +286,7 @@ class ConnectionDialog(QDialog):
         """浏览密钥文件"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "选择SSH密钥文件", 
-            edit.text() or os.path.expanduser("~/.ssh"),
+            edit.text() or os.path.join(os.path.expanduser("~"), ".ssh"),
             "所有文件 (*);;PEM文件 (*.pem);;PPK文件 (*.ppk)"
         )
         if file_path:

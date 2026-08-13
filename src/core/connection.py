@@ -14,6 +14,7 @@ if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from models.server import ServerConfig, JumpChain
+from core.win_utils import to_long_path
 
 
 class ConnectionError(Exception):
@@ -293,7 +294,7 @@ class AsyncSFTPWrapper:
             
             # 追加模式（断点续传）或覆盖模式（全新下载）
             mode = 'ab' if offset > 0 else 'wb'
-            with open(localpath, mode) as local_file:
+            with open(to_long_path(localpath), mode) as local_file:
                 chunk_size = 1024 * 1024  # 1MB
                 downloaded = offset
                 

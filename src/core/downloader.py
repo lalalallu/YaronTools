@@ -3,6 +3,7 @@
 """
 import os
 import time
+import logging
 import threading
 from typing import Dict, List, Optional, Callable
 from queue import Queue
@@ -10,6 +11,24 @@ from datetime import datetime
 
 from models.download_task import DownloadTask, DownloadStatus, DownloadProgress
 from .sftp_client import SFTPClientWrapper
+from .win_utils import to_long_path
+
+logger = logging.getLogger("yarontools.downloader")
+
+
+def _safe_replace(src: str, dst: str):
+    """Windows 安全重命名：os.replace + 杀毒软件锁定重试"""
+    src_long = to_long_path(src)
+    dst_long = to_long_path(dst)
+    last_error = None
+    for _ in range(3):
+        try:
+            os.replace(src_long, dst_long)
+            return
+        except (PermissionError, OSError) as e:
+            last_error = e
+            time.sleep(0.5)
+    raise last_error
 
 
 class DownloadManager:
@@ -123,9 +142,9 @@ class DownloadManager:
             self._stop_flags[task.id] = True
     
     def resume_download(self, task_id: str):
-        """恢复下载"""
+        """恢复下载（暂停任务继续 / 失败任务重试，均从 .part 断点续传）"""
         task = self.get_task(task_id)
-        if task and task.status == DownloadStatus.PAUSED:
+        if task and task.status in (DownloadStatus.PAUSED, DownloadStatus.FAILED):
             task.resume()
             self._stop_flags[task.id] = False
             self._task_queue.put(task.id)
@@ -176,6 +195,7 @@ class DownloadManager:
                 self._download_file(task)
             except Exception as e:
                 task.fail(str(e))
+                logger.exception("下载失败 %s -> %s: %s", task.remote_path, task.local_path, e)
                 self._notify_error(task.id, str(e))
             
             self._task_queue.task_done()
@@ -195,7 +215,7 @@ class DownloadManager:
                 final_path = task.local_path
                 if os.path.exists(final_path):
                     os.remove(final_path)
-                os.rename(task.temp_path, final_path)
+                _safe_replace(task.temp_path, final_path)
                 task.complete()
                 self._notify_complete(task.id, task.local_path)
                 return
@@ -253,7 +273,7 @@ class DownloadManager:
                 final_path = task.local_path
                 if os.path.exists(final_path):
                     os.remove(final_path)
-                os.rename(task.temp_path, final_path)
+                _safe_replace(task.temp_path, final_path)
                 # 清理续传信息文件
                 if task.resume_info_path and os.path.exists(task.resume_info_path):
                     try:

@@ -1,10 +1,11 @@
 # YaronTools
 
-统一图形化 SSH 远程管理工具，集成文件浏览下载、远程配置文件编辑、PCD 点云坐标编辑三大功能模块。
+统一图形化 SSH 远程管理工具（Windows 版），集成文件浏览下载、远程配置文件编辑、PCD 点云坐标编辑三大功能模块。
 
 ## 功能特性
 
 - **📁 文件浏览与下载**：远程目录浏览、文件下载，支持跳板机连接、断点续传、并行下载
+- **Windows 原生体验**：任务栏下载进度、完成 Toast 通知、资源管理器定位、真实"下载"文件夹、长路径与非法文件名自动处理、重名自动加 (1) 后缀
 - **⚙️ 远程配置编辑**：远程 INI 配置文件在线编辑（key=value），支持搜索过滤、修改标记、撤销
 - **🔲 PCD 坐标编辑**：远程 PCD 点云坐标文件图形化编辑，分组编辑 x/y/z，格式保持
 - **🔐 安全写入**：sudo 提权写入、自动备份（最多保留 5 个）、远程文件冲突检测
@@ -12,12 +13,14 @@
 
 ## 系统要求
 
-- Python 3.8+
-- 支持系统：Windows / macOS / Linux
+- Windows 10 / Windows 11
+- Python 3.13+
+
+> 注意：远端目标服务器为 Linux（SFTP 协议传输）。
 
 ## 安装
 
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
@@ -25,7 +28,7 @@ pip install -r requirements.txt
 
 ### 启动
 
-```bash
+```powershell
 python main.py
 ```
 
@@ -35,13 +38,14 @@ python main.py
 2. 选择连接模式（直连 / 跳板机）并填写服务器信息
 3. 点击 **"保存并连接"**
 
-连接面板中可设置 sudo 密码（留空则使用 SSH 密码。
+连接面板中可设置 sudo 密码（留空则使用 SSH 密码）。
 
 ### 文件浏览（Ctrl+1）
 
 - 路径栏输入路径回车跳转，双击文件夹进入
 - 勾选文件 → 选择本地目录 → 点击"下载选中"
-- 支持暂停/续传/取消/打开
+- 支持暂停/续传/取消/打开/在资源管理器中定位
+- 默认保存到系统"下载"文件夹；文件名中的 Windows 非法字符自动替换；重名文件自动追加 ` (1)` 后缀
 
 ### 配置编辑（Ctrl+2）
 
@@ -82,6 +86,7 @@ src/
 │   ├── sftp_client.py           # SFTP 操作封装
 │   ├── sftp_extended.py         # SFTP 读写扩展
 │   ├── downloader.py            # 文件下载管理器
+│   ├── win_utils.py             # Windows 原生工具（文件名/长路径/通知）
 │   ├── sudo_executor.py         # sudo 操作执行器
 │   ├── backup_manager.py        # 远程文件备份管理
 │   └── conflict_detector.py     # 远程文件冲突检测
@@ -97,7 +102,7 @@ src/
 │   └── pcd_parser.py            # PCD 格式解析 / 生成
 │
 ├── ui/                          # 图形界面
-│   ├── main_window.py           # 主窗口（QTabWidget 架构）
+│   ├── main_window.py           # 主窗口（QTabWidget 架构，含任务栏进度）
 │   ├── dialogs/
 │   │   └── connection_dialog.py # 连接配置对话框
 │   ├── tabs/
@@ -110,13 +115,18 @@ src/
 │       └── server_info_widget.py
 │
 └── configs/
-    └── configs.json             # 连接配置存储
+    └── configs.json             # 连接配置存储（exe 同目录，便携式）
 ```
 
 ## 打包
 
-```bash
-pyinstaller --onefile --windowed \
-  --name="YaronTools" \
-  main.py
+```powershell
+pyinstaller --name "YaronTools" --windowed --onefile --clean `
+  --hidden-import "PyQt6.sip" --hidden-import "asyncssh" --hidden-import "winotify" `
+  --collect-all PyQt6 main.py
 ```
+
+## 注意事项
+
+- **杀毒软件误报**：PyInstaller 单文件打包可能触发杀毒软件误报，可将程序目录加入白名单或改用 `--onedir` 模式打包。
+- **配置存储**：连接配置保存在程序同目录 `configs/configs.json`（便携式布局），请勿将程序安装在无写权限的目录（如 Program Files）。

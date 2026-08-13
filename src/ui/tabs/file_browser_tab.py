@@ -1,20 +1,25 @@
 import os
 import threading
-import subprocess
-import platform
 from datetime import datetime
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QSplitter, QScrollArea, QFileDialog, QMessageBox
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QStandardPaths
 
 from models.download_task import DownloadTask, DownloadStatus
 from core.sftp_client import SFTPClientWrapper, RemoteFile
 from core.downloader import DownloadManager
+from core.win_utils import sanitize_filename, unique_path, open_path, show_in_explorer, send_toast
 from ui.widgets.file_list_widget import FileListWidget
 from ui.widgets.download_item_widget import DownloadItemWidget
+
+
+def _get_default_download_dir() -> str:
+    """获取 Windows 默认下载目录（已知文件夹，支持用户重定向）"""
+    path = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
+    return path or os.path.join(os.path.expanduser("~"), "Downloads")
 
 
 class FileBrowserTab(QWidget):
@@ -35,7 +40,7 @@ class FileBrowserTab(QWidget):
 
         self._update_timer = QTimer()
         self._update_timer.timeout.connect(self._update_progress)
-        self._update_timer.start(500)
+        self._update_timer.start(2000)
 
         self.files_loaded.connect(self._on_directory_loaded)
 
@@ -103,7 +108,7 @@ class FileBrowserTab(QWidget):
         local_path_layout.addWidget(QLabel("保存到:"))
 
         self.local_path_edit = QLineEdit()
-        self.local_path_edit.setText(os.path.expanduser("~/Downloads"))
+        self.local_path_edit.setText(_get_default_download_dir())
         local_path_layout.addWidget(self.local_path_edit)
 
         self.browse_local_btn = QPushButton("浏览...")
@@ -155,7 +160,7 @@ class FileBrowserTab(QWidget):
     def set_sftp(self, sftp: SFTPClientWrapper):
         self._sftp = sftp
         if sftp:
-            self._downloader = DownloadManager(sftp)
+            self._downloader = DownloadManager(sftp, max_concurrent=4)
             self._downloader.add_progress_callback(self._on_download_progress)
             self._downloader.add_complete_callback(self._on_download_complete)
             self._downloader.add_error_callback(self._on_download_error)
@@ -291,7 +296,8 @@ class FileBrowserTab(QWidget):
             if file.is_dir:
                 continue
             try:
-                local_path = os.path.join(local_dir, file.name)
+                file_name = sanitize_filename(file.name)
+                local_path = unique_path(os.path.join(local_dir, file_name))
                 task = self._downloader.create_task(file.path, local_path, file.size)
                 self._downloader.start_download(task.id)
                 self._add_download_widget(task)
@@ -306,6 +312,7 @@ class FileBrowserTab(QWidget):
         widget.resume_clicked.connect(self._on_resume_clicked)
         widget.cancel_clicked.connect(self._on_cancel_clicked)
         widget.open_clicked.connect(self._on_open_clicked)
+        widget.locate_clicked.connect(self._on_locate_clicked)
 
         self.download_container_layout.insertWidget(
             self.download_container_layout.count() - 1, widget
@@ -327,21 +334,27 @@ class FileBrowserTab(QWidget):
     def _on_open_clicked(self, task_id: str):
         task = self._downloader.get_task(task_id) if self._downloader else None
         if task and task.local_path:
-            if platform.system() == "Windows":
-                os.startfile(task.local_path)
-            elif platform.system() == "Darwin":
-                subprocess.run(["open", task.local_path])
-            else:
-                subprocess.run(["xdg-open", task.local_path])
+            open_path(task.local_path)
+
+    def _on_locate_clicked(self, task_id: str):
+        task = self._downloader.get_task(task_id) if self._downloader else None
+        if task and task.local_path:
+            show_in_explorer(task.local_path)
 
     def _on_download_progress(self, task_id: str, downloaded: int, total: int):
         pass
 
     def _on_download_complete(self, task_id: str, local_path: str):
-        pass
+        task = self._downloader.get_task(task_id) if self._downloader else None
+        file_name = task.file_name if task else os.path.basename(local_path)
+        send_toast("下载完成", f"{file_name}\n{local_path}")
 
     def _on_download_error(self, task_id: str, error: str):
         pass
+
+    def get_downloader(self) -> DownloadManager:
+        """获取下载管理器（供任务栏进度显示使用）"""
+        return self._downloader
 
     def _update_progress(self):
         if not self._downloader:

@@ -1,0 +1,50 @@
+2026-08-13 11:36:47,239 INFO comtypes.client._code_cache: Imported existing <module 'comtypes.gen' from 'D:\\commonsoftware\\Python313\\Lib\\site-packages\\comtypes\\gen\\__init__.py'>
+2026-08-13 11:36:47,248 INFO comtypes.client._code_cache: Using writeable comtypes cache directory: 'D:\commonsoftware\Python313\Lib\site-packages\comtypes\gen'
+2026-08-13 11:37:11,194 INFO asyncssh: Host canonicalization disabled
+2026-08-13 11:37:11,194 INFO asyncssh: Opening SSH connection to 192.168.102.6, port 22
+2026-08-13 11:37:11,304 INFO asyncssh: [conn=0] Connected to SSH server at 192.168.102.6, port 22
+2026-08-13 11:37:11,304 INFO asyncssh: [conn=0]   Local address: 192.168.102.100, port 50008
+2026-08-13 11:37:11,304 INFO asyncssh: [conn=0]   Peer address: 192.168.102.6, port 22
+2026-08-13 11:37:11,343 INFO asyncssh: [conn=0] Beginning auth for user root
+2026-08-13 11:37:11,400 INFO asyncssh: [conn=0] Auth for user root succeeded
+2026-08-13 11:37:11,400 INFO asyncssh: [conn=0, chan=0] Requesting new SSH session
+2026-08-13 11:37:11,565 INFO asyncssh: [conn=0, chan=0]   Subsystem: sftp
+2026-08-13 11:37:11,568 INFO asyncssh.sftp: [conn=0, chan=0] Starting SFTP client
+2026-08-13 11:38:21,153 INFO asyncssh: [conn=0] Closing connection
+2026-08-13 11:38:21,155 INFO asyncssh: [conn=0, chan=0] Closing channel
+2026-08-13 11:38:21,160 INFO asyncssh: [conn=0] Sending disconnect: Disconnected by application (11)
+2026-08-13 11:38:21,164 INFO asyncssh: [conn=0] Connection closed
+2026-08-13 11:38:21,165 INFO asyncssh: [conn=0, chan=0] Closing channel due to connection close
+2026-08-13 11:38:21,166 INFO asyncssh: [conn=0, chan=0] Channel closed
+2026-08-13 11:38:21,169 INFO asyncssh.sftp: [conn=0, chan=0] SFTP client exited
+2026-08-13 11:38:21,170 INFO asyncssh: [conn=0, chan=0] Closing channel
+2026-08-13 11:38:29,998 INFO asyncssh: Host canonicalization disabled
+2026-08-13 11:38:29,998 INFO asyncssh: Opening SSH connection to 192.168.102.6, port 22
+2026-08-13 11:38:50,745 INFO asyncssh: Host canonicalization disabled
+2026-08-13 11:38:50,745 INFO asyncssh: Opening SSH connection to 192.168.102.6, port 22
+2026-08-13 11:38:50,842 INFO asyncssh: [conn=1] Connected to SSH server at 192.168.102.6, port 22
+2026-08-13 11:38:50,842 INFO asyncssh: [conn=1]   Local address: 192.168.102.100, port 51110
+2026-08-13 11:38:50,842 INFO asyncssh: [conn=1]   Peer address: 192.168.102.6, port 22
+2026-08-13 11:38:50,878 INFO asyncssh: [conn=1] Beginning auth for user tom
+2026-08-13 11:38:51,077 INFO asyncssh: [conn=1] Auth for user tom succeeded
+2026-08-13 11:38:51,082 INFO asyncssh: Host canonicalization disabled
+2026-08-13 11:38:51,082 INFO asyncssh: [conn=1] Opening SSH connection to 192.168.102.235, port 22 via SSH tunnel
+2026-08-13 11:38:51,082 INFO asyncssh: [conn=1] Opening direct TCP connection to 192.168.102.235, port 22
+2026-08-13 11:38:51,082 INFO asyncssh: [conn=1]   Client address: dynamic port
+2026-08-13 11:38:51,268 INFO asyncssh: [conn=2] Connected to SSH server at 192.168.102.235, port 22
+2026-08-13 11:38:51,268 INFO asyncssh: [conn=2]   Local address: 192.168.102.100, port 51110
+2026-08-13 11:38:51,268 INFO asyncssh: [conn=2]   Peer address: dynamic port
+2026-08-13 11:38:51,477 INFO asyncssh: [conn=2] Beginning auth for user tom
+2026-08-13 11:38:52,049 INFO asyncssh: [conn=2] Auth for user tom succeeded
+2026-08-13 11:38:52,049 INFO asyncssh: [conn=2, chan=0] Requesting new SSH session
+2026-08-13 11:38:52,497 INFO asyncssh: [conn=2, chan=0]   Subsystem: sftp
+2026-08-13 11:38:52,578 INFO asyncssh.sftp: [conn=2, chan=0] Starting SFTP client
+2026-08-13 11:39:58,961 INFO asyncssh: [conn=2] Closing connection
+2026-08-13 11:39:58,961 INFO asyncssh: [conn=2, chan=0] Closing channel
+2026-08-13 11:39:58,962 INFO asyncssh: [conn=2] Sending disconnect: Disconnected by application (11)
+2026-08-13 11:39:58,962 INFO asyncssh: [conn=1, chan=0] Aborting channel
+2026-08-13 11:39:58,963 INFO asyncssh: [conn=2] Connection closed
+2026-08-13 11:39:58,963 INFO asyncssh: [conn=2, chan=0] Closing channel due to connection close
+2026-08-13 11:39:58,963 INFO asyncssh: [conn=2, chan=0] Channel closed
+2026-08-13 11:39:58,963 INFO asyncssh.sftp: [conn=2, chan=0] SFTP client exited
+2026-08-13 11:39:58,963 INFO asyncssh: [conn=2, chan=0] Closing channel

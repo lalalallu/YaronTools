@@ -4,7 +4,7 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableView, 
     QLineEdit, QPushButton, QLabel, QHeaderView,
-    QAbstractItemView, QCheckBox
+    QAbstractItemView, QCheckBox, QSpinBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QAbstractTableModel, QModelIndex
 from PyQt6.QtGui import QFont
@@ -110,6 +110,19 @@ class FileModel(QAbstractTableModel):
         else:
             self._checked.clear()
         self.endResetModel()
+
+    def checkNextN(self, count: int) -> int:
+        """勾选之后 N 个未勾选的文件，返回实际勾选数量"""
+        to_check = []
+        for i in range(len(self._files)):
+            if i not in self._checked:
+                to_check.append(i)
+                if len(to_check) >= count:
+                    break
+        self.beginResetModel()
+        self._checked.update(to_check)
+        self.endResetModel()
+        return len(to_check)
     
     def getFile(self, row: int) -> RemoteFile:
         """获取指定行的文件"""
@@ -145,7 +158,19 @@ class FileListWidget(QWidget):
         toolbar.addWidget(self.select_all_check)
         
         toolbar.addStretch()
-        
+
+        self._batch_spin = QSpinBox()
+        self._batch_spin.setRange(1, 999)
+        self._batch_spin.setValue(10)
+        self._batch_spin.setFixedWidth(60)
+        self._batch_spin.setSuffix(" 个")
+        toolbar.addWidget(self._batch_spin)
+
+        self._batch_btn = QPushButton("勾选")
+        self._batch_btn.setFixedWidth(50)
+        self._batch_btn.clicked.connect(self._on_batch_check)
+        toolbar.addWidget(self._batch_btn)
+
         # 搜索框
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("🔍 搜索文件...")
@@ -289,6 +314,16 @@ class FileListWidget(QWidget):
         checked = state == Qt.CheckState.Checked.value
         self.model.checkAll(checked)
         self._emit_selection()
+
+    def _on_batch_check(self):
+        """勾选 N 个未选中文件"""
+        count = self._batch_spin.value()
+        added = self.model.checkNextN(count)
+        self._emit_selection()
+        if added == 0:
+            self.status_label.setText("所有文件已全部勾选")
+        else:
+            self._update_status()
     
     def _on_search(self, text: str):
         """搜索过滤"""

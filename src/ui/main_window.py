@@ -16,6 +16,7 @@ from core.sftp_extended import SFTPClientWrapperExt
 from core.sudo_executor import SudoExecutor
 from core.backup_manager import BackupManager
 from core.conflict_detector import ConflictDetector
+from core.win_utils import TaskbarProgress
 
 from ui.dialogs.connection_dialog import ConnectionDialog
 from ui.tabs.file_browser_tab import FileBrowserTab
@@ -44,6 +45,10 @@ class UnifiedMainWindow(QMainWindow):
         self._file_browser_tab: FileBrowserTab = None
         self._config_editor_tab: ConfigEditorTab = None
         self._pcd_editor_tab: PCDEditorTab = None
+
+        self._taskbar_progress = None
+        self._taskbar_timer = None
+        self._taskbar_inited = False
 
         self._setup_ui()
         self._setup_menu()
@@ -131,6 +136,48 @@ class UnifiedMainWindow(QMainWindow):
         self._tab_widget.addTab(self._pcd_editor_tab, "🔲 PCD编辑")
 
         self._tab_widget.currentChanged.connect(self._on_tab_changed)
+
+    def showEvent(self, event):
+        """窗口显示后初始化任务栏进度"""
+        super().showEvent(event)
+        if not self._taskbar_inited:
+            self._taskbar_inited = True
+            self._init_taskbar_progress()
+
+    def _init_taskbar_progress(self):
+        """初始化 Windows 任务栏进度显示"""
+        try:
+            progress = TaskbarProgress(int(self.winId()))
+            if not progress.is_available():
+                return
+            self._taskbar_progress = progress
+            self._taskbar_timer = QTimer(self)
+            self._taskbar_timer.timeout.connect(self._update_taskbar_progress)
+            self._taskbar_timer.start(2000)
+        except Exception:
+            self._taskbar_progress = None
+
+    def _update_taskbar_progress(self):
+        """同步下载总进度到任务栏"""
+        if not self._taskbar_progress:
+            return
+        downloader = self._file_browser_tab.get_downloader() if self._file_browser_tab else None
+        if not downloader:
+            self._taskbar_progress.hide()
+            return
+        progress = downloader.get_total_progress()
+        total = progress.get("total_count", 0)
+        if total > 0:
+            self._taskbar_progress.set_value(int(progress.get("percentage", 0)))
+            if progress.get("completed_count", 0) >= total:
+                QTimer.singleShot(2000, self._hide_taskbar_progress)
+        else:
+            self._taskbar_progress.hide()
+
+    def _hide_taskbar_progress(self):
+        """隐藏任务栏进度条"""
+        if self._taskbar_progress:
+            self._taskbar_progress.hide()
 
     def _setup_menu(self):
         menubar = self.menuBar()

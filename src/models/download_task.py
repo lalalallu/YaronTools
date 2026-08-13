@@ -88,8 +88,12 @@ class DownloadTask:
     
     def __post_init__(self):
         """初始化后处理"""
+        # 延迟导入，避免 models -> core/__init__ -> downloader -> models 循环导入
+        from core.win_utils import sanitize_filename
         if not self.file_name:
-            self.file_name = os.path.basename(self.remote_path)
+            self.file_name = sanitize_filename(os.path.basename(self.remote_path))
+        else:
+            self.file_name = sanitize_filename(self.file_name)
         
         # 设置临时文件路径
         if self.local_path and not self.temp_path:

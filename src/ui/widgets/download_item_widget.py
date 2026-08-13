@@ -2,7 +2,7 @@
 下载项组件 - 显示单个下载任务的进度
 """
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QProgressBar,
+    QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -18,10 +18,14 @@ class DownloadItemWidget(QFrame):
     resume_clicked = pyqtSignal(str)  # task_id
     cancel_clicked = pyqtSignal(str)  # task_id
     open_clicked = pyqtSignal(str)    # task_id
+    locate_clicked = pyqtSignal(str)  # task_id
     
     def __init__(self, task: DownloadTask, parent=None):
         super().__init__(parent)
         self._task = task
+        self._prev_status = None
+        self._prev_percentage = -1
+        self._prev_downloaded = -1
         self._setup_ui()
         self._update_display()
     
@@ -56,44 +60,26 @@ class DownloadItemWidget(QFrame):
         header_layout.addWidget(self.status_label)
         
         layout.addLayout(header_layout)
-        
-        # 进度条
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFormat("%p%")
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #ced4da;
-                border-radius: 3px;
-                text-align: center;
-                background-color: #e9ecef;
-            }
-            QProgressBar::chunk {
-                background-color: #0d6efd;
-                border-radius: 2px;
-            }
-        """)
-        layout.addWidget(self.progress_bar)
-        
+
+        self.progress_label = QLabel()
+        self.progress_label.setStyleSheet(
+            "font-weight: bold; font-size: 13px; color: #0d6efd;"
+        )
+        layout.addWidget(self.progress_label)
+
         # 详情行
         detail_layout = QHBoxLayout()
-        
-        self.size_label = QLabel()
-        self.size_label.setStyleSheet("color: #6c757d; font-size: 11px;")
-        detail_layout.addWidget(self.size_label)
-        
-        detail_layout.addStretch()
-        
+
         self.speed_label = QLabel()
         self.speed_label.setStyleSheet("color: #6c757d; font-size: 11px;")
         detail_layout.addWidget(self.speed_label)
-        
+
         detail_layout.addStretch()
-        
+
         self.eta_label = QLabel()
         self.eta_label.setStyleSheet("color: #6c757d; font-size: 11px;")
         detail_layout.addWidget(self.eta_label)
-        
+
         layout.addLayout(detail_layout)
         
         # 按钮行
@@ -130,6 +116,14 @@ class DownloadItemWidget(QFrame):
         self.open_btn.hide()
         button_layout.addWidget(self.open_btn)
         
+        self.locate_btn = QPushButton("定位")
+        self.locate_btn.setFixedWidth(60)
+        self.locate_btn.clicked.connect(
+            lambda: self.locate_clicked.emit(self._task.id)
+        )
+        self.locate_btn.hide()
+        button_layout.addWidget(self.locate_btn)
+        
         layout.addLayout(button_layout)
     
     def _update_display(self):
@@ -139,15 +133,19 @@ class DownloadItemWidget(QFrame):
         # 文件名
         self.file_label.setText(task.file_name)
         
-        # 进度
+        # 进度文字
         percentage = task.progress.percentage
-        self.progress_bar.setValue(int(percentage))
-        
-        # 大小
         downloaded_str = DownloadProgress.format_size(task.progress.downloaded)
         total_str = DownloadProgress.format_size(task.progress.total)
-        self.size_label.setText(f"{downloaded_str} / {total_str}")
-        
+        if task.status == DownloadStatus.DOWNLOADING:
+            self.progress_label.setText(
+                f"{percentage:.1f}%  {downloaded_str}/{total_str}"
+            )
+        elif task.status == DownloadStatus.COMPLETED:
+            self.progress_label.setText(f"100%  {total_str}")
+        else:
+            self.progress_label.setText(f"{percentage:.1f}%  {downloaded_str}/{total_str}")
+
         # 速度
         if task.status == DownloadStatus.DOWNLOADING:
             speed_str = DownloadProgress.format_speed(task.progress.speed)
@@ -168,59 +166,32 @@ class DownloadItemWidget(QFrame):
     def _update_status_display(self):
         """更新状态显示"""
         status = self._task.status
-        
-        # 状态文本和颜色
+
         status_config = {
-            DownloadStatus.PENDING: ("等待中", "#6c757d"),
-            DownloadStatus.DOWNLOADING: ("下载中", "#0d6efd"),
-            DownloadStatus.PAUSED: ("已暂停", "#ffc107"),
-            DownloadStatus.COMPLETED: ("已完成", "#198754"),
-            DownloadStatus.FAILED: (f"失败: {self._task.error_message}", "#dc3545"),
-            DownloadStatus.CANCELLED: ("已取消", "#6c757d"),
+            DownloadStatus.PENDING: ("等待中", "#6c757d", "#6c757d"),
+            DownloadStatus.DOWNLOADING: ("下载中", "#0d6efd", "#0d6efd"),
+            DownloadStatus.PAUSED: ("已暂停", "#ffc107", "#ffc107"),
+            DownloadStatus.COMPLETED: ("已完成", "#198754", "#198754"),
+            DownloadStatus.FAILED: (f"失败: {self._task.error_message}", "#dc3545", "#dc3545"),
+            DownloadStatus.CANCELLED: ("已取消", "#6c757d", "#6c757d"),
         }
-        
-        text, color = status_config.get(status, ("未知", "#6c757d"))
+
+        text, color, prog_color = status_config.get(status, ("未知", "#6c757d", "#6c757d"))
         self.status_label.setText(text)
         self.status_label.setStyleSheet(f"color: {color};")
-        
-        # 进度条颜色
-        if status == DownloadStatus.COMPLETED:
-            self.progress_bar.setStyleSheet("""
-                QProgressBar {
-                    border: 1px solid #ced4da;
-                    border-radius: 3px;
-                    text-align: center;
-                    background-color: #e9ecef;
-                }
-                QProgressBar::chunk {
-                    background-color: #198754;
-                    border-radius: 2px;
-                }
-            """)
-        elif status == DownloadStatus.FAILED:
-            self.progress_bar.setStyleSheet("""
-                QProgressBar {
-                    border: 1px solid #ced4da;
-                    border-radius: 3px;
-                    text-align: center;
-                    background-color: #e9ecef;
-                }
-                QProgressBar::chunk {
-                    background-color: #dc3545;
-                    border-radius: 2px;
-                }
-            """)
-        
-        # 按钮显示
+        self.progress_label.setStyleSheet(f"font-weight: bold; font-size: 13px; color: {prog_color};")
+
         is_downloading = status == DownloadStatus.DOWNLOADING
         is_paused = status == DownloadStatus.PAUSED
+        is_failed = status == DownloadStatus.FAILED
         is_completed = status == DownloadStatus.COMPLETED
-        is_finished = status in (DownloadStatus.COMPLETED, DownloadStatus.FAILED, DownloadStatus.CANCELLED)
-        
+
         self.pause_btn.setVisible(is_downloading)
-        self.resume_btn.setVisible(is_paused)
-        self.cancel_btn.setVisible(not is_completed)
+        self.resume_btn.setVisible(is_paused or is_failed)
+        self.resume_btn.setText("重试" if is_failed else "继续")
+        self.cancel_btn.setVisible(not (is_completed or is_failed))
         self.open_btn.setVisible(is_completed)
+        self.locate_btn.setVisible(is_completed)
     
     def update_progress(self, downloaded: int, total: int):
         """更新进度"""
@@ -229,7 +200,17 @@ class DownloadItemWidget(QFrame):
         self._update_display()
     
     def update_task(self, task: DownloadTask):
-        """更新任务"""
+        """更新任务——仅在状态/进度变化时重绘"""
+        changed = (
+            task.status != self._prev_status
+            or int(task.progress.percentage) != self._prev_percentage
+            or task.progress.downloaded != self._prev_downloaded
+        )
+        if not changed:
+            return
+        self._prev_status = task.status
+        self._prev_percentage = int(task.progress.percentage)
+        self._prev_downloaded = task.progress.downloaded
         self._task = task
         self._update_display()
     

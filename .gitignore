@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.spec
 __pycache__/*
 core/__pycache__/*
 models/__pycache__/*
@@ -11,6 +12,10 @@ ui/__pycache__/*
 ui/dialogs/__pycache__/*
 ui/widgets/__pycache__/*
 src/configs/configs.json
+
+# 下载临时文件
+*.part
+*.resume
 
 
 # 虚拟环境

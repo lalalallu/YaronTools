@@ -1,0 +1,23 @@
+name: Sync from Gitee
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone from Gitee
+        run: |
+          git clone --mirror https://gitee.com/lalalallu/yarontools.git repo-mirror
+          cd repo-mirror
+
+      - name: Push to GitHub
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          cd repo-mirror
+          git remote add github https://${GH_PAT}@github.com/lalalallu/YaronTools.git
+          git push github --mirror

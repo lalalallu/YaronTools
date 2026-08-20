@@ -35,7 +35,7 @@ class FileBrowserTab(QWidget):
 
         self._update_timer = QTimer()
         self._update_timer.timeout.connect(self._update_progress)
-        self._update_timer.start(500)
+        self._update_timer.start(2000)
 
         self.files_loaded.connect(self._on_directory_loaded)
 
@@ -155,7 +155,7 @@ class FileBrowserTab(QWidget):
     def set_sftp(self, sftp: SFTPClientWrapper):
         self._sftp = sftp
         if sftp:
-            self._downloader = DownloadManager(sftp)
+            self._downloader = DownloadManager(sftp, max_concurrent=4)
             self._downloader.add_progress_callback(self._on_download_progress)
             self._downloader.add_complete_callback(self._on_download_complete)
             self._downloader.add_error_callback(self._on_download_error)
